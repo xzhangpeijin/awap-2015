@@ -11,7 +11,7 @@ class Player(BasePlayer):
     def should_build(self, time, money):
         if time > GAME_LENGTH / 2:
             return False
-        return len(self.stations) < HUBS and money >= self.build_cost and len(self.stat_sel) > 0
+        return len(self.stations) < HUBS - 3 and money >= self.build_cost and len(self.stat_sel) > 0
 
     def __init__(self, state):
         graph = state.get_graph()
@@ -23,7 +23,7 @@ class Player(BasePlayer):
     def path_is_valid(self, state, path):
         graph = state.get_graph()
         for i in range(0, len(path) - 1):
-            if path[i + 1] not in graph.edge[path[i]]:
+            if path[i + 1] not in graph.edge[path[i]] or graph.edge[path[i]][path[i + 1]]['in_use']:
                 return False
         return True
 
@@ -44,11 +44,8 @@ class Player(BasePlayer):
         graph = state.get_graph()
         commands = []
         
-        print "Active orders:"
-        print state.get_active_orders()
         for order, path in state.get_active_orders():
             pairs = [(path[i], path[i+1]) for i in range(len(path)-1)]
-            print "REMOVING!!!"
             graph.remove_edges_from(pairs)
         
         if self.should_build(state.get_time(), state.get_money()):
@@ -65,19 +62,19 @@ class Player(BasePlayer):
                 for station in self.stations:
                     try:
                         path = nx.shortest_path(graph, station, order.get_node())
+                        if shortest_path == None or len(path) < len(shortest_path):
+                            shortest_order, shortest_path = order, path
                     except:
                         pass
-                    if shortest_path == None or len(path) < len(shortest_path):
-                        shortest_order, shortest_path = order, path
             if shortest_path == None:
                 break
             else:
-                if self.path_is_valid(state, shortest_path):
+                if (self.path_is_valid(state, shortest_path)):
                     commands.append(self.send_command(order, shortest_path))
                     pairs = [(shortest_path[i], shortest_path[i+1]) for i in range(len(shortest_path)-1)]
                     graph.remove_edges_from(pairs)
                     pending_orders.remove(order)
                 else:
                     break
-
+                    
         return commands
