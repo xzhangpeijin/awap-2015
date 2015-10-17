@@ -2,14 +2,17 @@ import networkx as nx
 import random
 from base_player import BasePlayer
 from settings import *
+import math
 
 LEARNING_PERIOD = 10
+SCALE_FACTOR = int(math.sqrt(GRAPH_SIZE)) / 10
 
 class Player(BasePlayer):
     global LEARNING_PERIOD
+    global SCALE_FACTOR
     
     build_cost = INIT_BUILD_COST
-    candidate_map = dict((n, 0) for n in range(GRAPH_SIZE))
+    candidate_map = dict((SCALE_FACTOR * n, 0) for n in range(GRAPH_SIZE / SCALE_FACTOR))
     time_passed = 0
     stations = []
     building = True
@@ -61,8 +64,8 @@ class Player(BasePlayer):
             print "Expected:", self.candidate_map[maxnode] * remain / self.time_passed
             if self.candidate_map[maxnode] * remain / self.time_passed > self.build_cost:
                 self.stations.append(maxnode)
-                self.candidate_map = dict((n, 0) for n in 
-                    filter(lambda x : x not in self.stations and x not in graph.neighbors(maxnode), range(GRAPH_SIZE)))
+                self.candidate_map = dict((SCALE_FACTOR * n, 0) for n in 
+                    filter(lambda x : x not in self.stations and x not in graph.neighbors(maxnode), range(GRAPH_SIZE / SCALE_FACTOR)))
                 self.time_passed = 0
                 self.build_cost = self.build_cost * BUILD_FACTOR
                 commands.append(self.build_command(maxnode))
@@ -71,22 +74,23 @@ class Player(BasePlayer):
                         
         pending_orders = state.get_pending_orders()
         
-        for order in pending_orders:
-            mpath, mscore = None, 0
-            for station in self.stations:
-                try:
-                    path = nx.shortest_path(graph, station, order.get_node())
-                    if mpath == None or self.path_score(order, path) > self.path_score(order, mpath):
-                        mpath, mscore = path, self.path_score(order, path)
-                except:
-                    pass
-            for node in self.candidate_map:
-                try:
-                    path = nx.shortest_path(graph, node, order.get_node())
-                    if self.path_score(order, path) > mscore:
-                        self.candidate_map[node] = self.candidate_map[node] + self.path_score(order, path) - mscore
-                except:
-                    pass
+        if self.building:
+            for order in pending_orders:
+                mpath, mscore = None, 0
+                for station in self.stations:
+                    try:
+                        path = nx.shortest_path(graph, station, order.get_node())
+                        if mpath == None or self.path_score(order, path) > self.path_score(order, mpath):
+                            mpath, mscore = path, self.path_score(order, path)
+                    except:
+                        pass
+                for node in self.candidate_map:
+                    try:
+                        path = nx.shortest_path(graph, node, order.get_node())
+                        if self.path_score(order, path) > mscore:
+                            self.candidate_map[node] = self.candidate_map[node] + self.path_score(order, path) - mscore
+                    except:
+                        pass
         
         while True:
             best_order, best_path, best_score = None, None, 0
