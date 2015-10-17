@@ -19,6 +19,7 @@ class Player(BasePlayer):
     building = True
     
     def __init__(self, state):
+        self.building = True
         self.stations = []
         self.processed_ids = []
         self.time_passed = 0
