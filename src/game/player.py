@@ -5,7 +5,7 @@ from settings import *
 import math
 
 LEARNING_PERIOD = 10
-SCALE_FACTOR = int(math.sqrt(GRAPH_SIZE)) / 10
+SCALE_FACTOR = int(GRAPH_SIZE) / 100
 
 class Player(BasePlayer):
     global LEARNING_PERIOD
@@ -15,9 +15,14 @@ class Player(BasePlayer):
     candidate_map = dict((SCALE_FACTOR * n, 0) for n in range(GRAPH_SIZE / SCALE_FACTOR))
     time_passed = 0
     stations = []
+    processed_ids = []
     building = True
     
     def __init__(self, state):
+        self.stations = []
+        self.processed_ids = []
+        self.time_passed = 0
+        self.candidate_map = dict((SCALE_FACTOR * n, 0) for n in range(GRAPH_SIZE / SCALE_FACTOR))
         return
 
     # Checks if we can use a given path
@@ -73,24 +78,28 @@ class Player(BasePlayer):
                 self.building = False
                         
         pending_orders = state.get_pending_orders()
-        
+
         if self.building:
             for order in pending_orders:
+                if order.id in self.processed_ids:
+                    continue
                 mpath, mscore = None, 0
+                shortest_paths = nx.shortest_path(graph, order.get_node())
                 for station in self.stations:
                     try:
-                        path = nx.shortest_path(graph, station, order.get_node())
+                        path = shortest_paths[station]
                         if mpath == None or self.path_score(order, path) > self.path_score(order, mpath):
                             mpath, mscore = path, self.path_score(order, path)
                     except:
                         pass
                 for node in self.candidate_map:
                     try:
-                        path = nx.shortest_path(graph, node, order.get_node())
+                        path = shortest_paths[node]
                         if self.path_score(order, path) > mscore:
                             self.candidate_map[node] = self.candidate_map[node] + self.path_score(order, path) - mscore
                     except:
                         pass
+                self.processed_ids.append(order.id)
         
         while True:
             best_order, best_path, best_score = None, None, 0
