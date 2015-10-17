@@ -11,7 +11,7 @@ class Player(BasePlayer):
     def should_build(self, time, money):
         if time > GAME_LENGTH / 2:
             return False
-        return len(self.stations) < HUBS - 3 and money >= self.build_cost and len(self.stat_sel) > 0
+        return len(self.stations) < HUBS and money >= self.build_cost and len(self.stat_sel) > 0
 
     def __init__(self, state):
         graph = state.get_graph()
@@ -69,12 +69,10 @@ class Player(BasePlayer):
             if shortest_path == None:
                 break
             else:
+                pending_orders.remove(order)
                 if (self.path_is_valid(state, shortest_path)):
                     commands.append(self.send_command(order, shortest_path))
                     pairs = [(shortest_path[i], shortest_path[i+1]) for i in range(len(shortest_path)-1)]
                     graph.remove_edges_from(pairs)
-                    pending_orders.remove(order)
-                else:
-                    break
                     
         return commands

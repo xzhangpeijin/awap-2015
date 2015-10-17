@@ -79,13 +79,10 @@ class Player(BasePlayer):
             if shortest_path == None:
                 break
             else:
-                if (self.path_is_valid(state, shortest_path)):
-                    commands.append(self.send_command(shortest_order, shortest_path))
-                    pairs = [(shortest_path[i], shortest_path[i+1]) for i in range(len(shortest_path)-1)]
-                    graph.remove_edges_from(pairs)
-                    pending_orders.remove(shortest_order)
-                else:
-                    pending_orders.remove(shortest_order)
-                    break
+                assert (self.path_is_valid(state, shortest_path))
+                commands.append(self.send_command(shortest_order, shortest_path))
+                pairs = [(shortest_path[i], shortest_path[i+1]) for i in range(len(shortest_path)-1)]
+                graph.remove_edges_from(pairs)
+                pending_orders.remove(shortest_order)
                     
         return commands
