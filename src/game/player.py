@@ -5,7 +5,7 @@ from settings import *
 import math
 
 LEARNING_PERIOD = 10
-SCALE_FACTOR = int(GRAPH_SIZE) / 100
+SCALE_FACTOR = max(int(GRAPH_SIZE) / 100, 1)
 
 class Player(BasePlayer):
     global LEARNING_PERIOD
