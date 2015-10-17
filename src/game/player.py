@@ -7,6 +7,7 @@ class Player(BasePlayer):
     build_cost = INIT_BUILD_COST
     stat_sel = []
     stations = []
+    path_length_weight = 2
     
     def should_build(self, time, money):
         if time > GAME_LENGTH / 2:
@@ -36,6 +37,10 @@ class Player(BasePlayer):
         vertex_choices = filter(lambda node: len(graph.neighbors(node)) == max_edges, self.stat_sel)
         vertex = random.choice(vertex_choices)
         return vertex
+
+    # lower is better
+    def path_score(self, order, path):
+        return self.path_length_weight * DECAY_FACTOR * len(path) - order.money
 
     def step(self, state):
         """
@@ -72,7 +77,7 @@ class Player(BasePlayer):
                 for station in self.stations:
                     try:
                         path = nx.shortest_path(graph, station, order.get_node())
-                        if shortest_path == None or len(path) < len(shortest_path):
+                        if shortest_path == None or self.path_score(order, path) < self.path_score(shortest_order, shortest_path):
                             shortest_order, shortest_path = order, path
                     except:
                         pass
