@@ -5,6 +5,7 @@ import multiprocessing
 import logging as log
 import functools
 import traceback
+from datetime import datetime
 from importlib import import_module
 from copy import deepcopy
 from state import State
@@ -63,7 +64,7 @@ class Game:
             exit()
 
         self.player = player
-        self.random.seed('I am an order seed!')
+        self.random.seed(datetime.now())
 
         hubs = deepcopy(G.nodes())
         random.shuffle(hubs)
